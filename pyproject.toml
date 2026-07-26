@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mg2si-active-learning"
+version = "0.3.0"
+description = "Material-centered inverse design and safe active learning for Mg2Si"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "botorch>=0.12,<1",
+  "gpytorch>=1.11,<2",
+  "matplotlib>=3.8,<4",
+  "numpy>=1.24,<3",
+  "openpyxl>=3.1,<4",
+  "pandas>=2.0,<3",
+  "PyYAML>=6,<7",
+  "scikit-learn>=1.4,<2",
+  "torch>=2.2",
+]
+
+[project.optional-dependencies]
+legacy = ["MultiBgolearn==0.1.1"]
+test = ["pytest>=8,<9"]
+
+[project.scripts]
+mg2si = "mg2si.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

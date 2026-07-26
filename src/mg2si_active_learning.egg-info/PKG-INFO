@@ -1,3 +1,23 @@
+Metadata-Version: 2.4
+Name: mg2si-active-learning
+Version: 0.3.0
+Summary: Material-centered inverse design and safe active learning for Mg2Si
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: botorch<1,>=0.12
+Requires-Dist: gpytorch<2,>=1.11
+Requires-Dist: matplotlib<4,>=3.8
+Requires-Dist: numpy<3,>=1.24
+Requires-Dist: openpyxl<4,>=3.1
+Requires-Dist: pandas<3,>=2.0
+Requires-Dist: PyYAML<7,>=6
+Requires-Dist: scikit-learn<2,>=1.4
+Requires-Dist: torch>=2.2
+Provides-Extra: legacy
+Requires-Dist: MultiBgolearn==0.1.1; extra == "legacy"
+Provides-Extra: test
+Requires-Dist: pytest<9,>=8; extra == "test"
+
 # Mg2Si 材料中心逆向设计与主动学习
 
 本项目围绕 `工艺参数 X -> 材料状态 Z -> 生物响应 Y` 建立科研闭环：根据目标肿瘤杀伤和正常细胞安全边界，学习材料需要达到的概率表征区间，再反推值得验证的合成、加工和应用条件。

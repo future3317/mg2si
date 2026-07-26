@@ -2,6 +2,9 @@
 *.xlsx
 *.xls
 *.csv
+*.sqlite
+*.sqlite.tmp
+data/processed/
 bo_*
 mobo_*.csv
 sample_id_mapping_review.csv

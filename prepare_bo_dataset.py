@@ -4,12 +4,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from mg2si.io.excel_reader import resolve_sources
+from mg2si.io.parsers import parse_pvp_mw as parse_pvp_mw_strict
 
 
 ROOT = Path(__file__).resolve().parent
-XLSX_FILES = sorted(ROOT.glob("*.xlsx"))
-if len(XLSX_FILES) < 2:
-    raise FileNotFoundError("需要两个 Excel 源文件")
+MG_PATH, TACE_PATH = resolve_sources(ROOT)
 
 
 def clean_text(value):
@@ -57,20 +57,7 @@ def parse_date(value):
 
 
 def parse_pvp_mw(value):
-    value = clean_text(value)
-    if pd.isna(value):
-        return np.nan
-    number = first_number(value)
-    if pd.isna(number):
-        return np.nan
-    upper = str(value).upper()
-    if "W" in upper:
-        return number * 10000.0
-    if "K" in upper:
-        return number * 1000.0
-    if "M" in upper:
-        return number * 1000000.0
-    return number
+    return parse_pvp_mw_strict(value)
 
 
 def parse_ratio(value):
@@ -272,8 +259,8 @@ def resolve_meta_sample_id(sample_id, meta_ids):
 
 
 def main():
-    meta = read_mg2si_metadata(XLSX_FILES[0])
-    long = read_tace_long(XLSX_FILES[1])
+    meta = read_mg2si_metadata(MG_PATH)
+    long = read_tace_long(TACE_PATH)
 
     meta_ids = set(meta["sample_id"].dropna())
     resolved = long["sample_id"].map(lambda x: resolve_meta_sample_id(x, meta_ids))

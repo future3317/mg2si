@@ -1,0 +1,9 @@
+schema_version: "1.0"
+sources:
+  material_workbook:
+    path: "Mg2Si材料库_已汇总SHS实验记录.xlsx"
+    required_sheets: ["01_Sample信息", "03_结构表征", "04_表面化学", "06_材料筛选", "05_生物性能"]
+  biology_workbook:
+    path: "TACE项目 材料品控 数据索引-260716.xlsx"
+    required_sheets: ["数据汇总", "原料 数据", "半成品I 数据", "半成品II数据", "成品数据"]
+

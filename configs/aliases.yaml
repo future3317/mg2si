@@ -1,0 +1,18 @@
+schema_version: "1.0"
+aliases:
+  MS-251016:
+    candidates: ["MS-251016-SHS", "MS-251016-Q"]
+    approved_by: pending_researcher_review
+    approved_date: null
+    reason: legacy_mapping_rule
+  MS-251215:
+    candidates: ["MS-251215-Q"]
+    approved_by: pending_researcher_review
+    approved_date: null
+    reason: legacy_mapping_rule
+  MS-260514:
+    candidates: ["MS-260514-SHS"]
+    approved_by: pending_researcher_review
+    approved_date: null
+    reason: legacy_mapping_rule
+

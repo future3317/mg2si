@@ -1,0 +1,17 @@
+schema_version: "1.0"
+model:
+  backend: botorch
+  minimum_rows: 20
+  minimum_groups: 4
+  minimum_state_rows: 12
+  random_seed: 20260726
+  posterior_samples: 256
+evaluation:
+  folds: 5
+  group_keys: [material_parent_id, experiment_id]
+recommendation:
+  pool_size: 1024
+  batch_size: 4
+  roles: [exploitation, exploration, boundary-learning, replicate]
+  allow_direct_baseline: true
+

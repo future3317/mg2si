@@ -3,13 +3,14 @@ import re
 
 import numpy as np
 import pandas as pd
+from mg2si.io.excel_reader import resolve_sources
+from mg2si.io.parsers import parse_pvp_mw as parse_pvp_mw_strict
+from mg2si.mapping.resolver import load_aliases
 
 
 ROOT = Path(__file__).resolve().parent
-XLSX_FILES = sorted(ROOT.glob("*.xlsx"))
-if len(XLSX_FILES) < 2:
-    raise FileNotFoundError("需要两个 Excel 源文件")
-MG_PATH, TACE_PATH = XLSX_FILES[0], XLSX_FILES[1]
+MG_PATH, TACE_PATH = resolve_sources(ROOT)
+ALIASES = load_aliases()
 
 
 def clean_text(value):
@@ -62,20 +63,7 @@ def parse_yes_no(value):
 
 
 def parse_pvp_mw(value):
-    value = clean_text(value)
-    if pd.isna(value):
-        return np.nan
-    number = first_number(value)
-    if pd.isna(number):
-        return np.nan
-    upper = str(value).upper()
-    if "W" in upper:
-        return number * 10000.0
-    if "K" in upper:
-        return number * 1000.0
-    if "M" in upper:
-        return number * 1000000.0
-    return number
+    return parse_pvp_mw_strict(value)
 
 
 def parse_ratio(value):
@@ -199,6 +187,7 @@ def read_tace_summary(path):
     data["material_source"] = data["material_source"].map(clean_text)
     data["post_treatment"] = data["post_treatment"].map(clean_text)
     data["tumor_cell_line"] = data["tumor_cell_line"].map(clean_text)
+    data["normal_cell_line"] = data["selection_cell"].map(clean_text)
     data["remark"] = data["remark"].map(clean_text)
     data["is_milled"] = data["is_milled_raw"].map(parse_yes_no)
     data["milled_size_nm"] = data["milled_size_nm_raw"].map(midpoint_number)
@@ -233,12 +222,7 @@ def choose_material_id(tace_id, stage, material_ids):
             candidates += [mid for mid in ids if str(mid).startswith(stem + "-")]
     candidates = sorted(set(candidates))
     if not candidates:
-        aliases = {
-            "MS-251016": ["MS-251016-SHS", "MS-251016-Q"],
-            "MS-251215": ["MS-251215-Q"],
-            "MS-260514": ["MS-260514-SHS"],
-        }
-        candidates = [mid for mid in aliases.get(normalized, []) if mid in material_ids]
+        candidates = [mid for mid in ALIASES.get(normalized, []) if mid in material_ids]
     if not candidates:
         return np.nan, "unmatched", "no_material_id_candidate", ""
 
@@ -293,6 +277,8 @@ def make_long_cell_table(data):
             "kill_assay_date": row["kill_assay_date"],
             "safety_assay_date": row["safety_assay_date"],
             "tumor_cell_line": row["tumor_cell_line"],
+            "normal_cell_line": row["normal_cell_line"],
+            "exposure_time_h": np.nan,
             "remark": row["remark"],
             "source_sheet": "数据汇总",
         }

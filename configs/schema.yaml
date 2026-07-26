@@ -1,0 +1,52 @@
+schema_version: "1.0"
+roles:
+  controllable_x:
+    - material_mg_mass_mg
+    - material_si_mass_mg
+    - material_molar_ratio_Mg_to_Si
+    - material_max_temp_c
+    - material_hold_time_min
+    - material_vacuum_cycle
+    - material_vacuum_time_min
+    - material_initial_pressure_atm
+    - material_milling_cycle_time
+    - material_ball_to_material_ratio
+    - pvp_mw
+    - material_to_pvp_ratio
+    - material_ultrasonic_time_h
+    - concentration_ppm
+  material_state_z:
+    - material_mg2si_purity_pct
+    - material_grain_size_nm
+    - material_dls_size_nm
+    - material_pdi
+    - material_zeta_potential_mv
+    - material_mg_si_atom_ratio
+    - material_mgo_ratio
+    - material_siox_ratio
+    - material_oxide_thickness
+  biology_context_c:
+    - tumor_cell_line
+    - normal_cell_line
+    - concentration_ppm
+    - exposure_time_h
+    - experiment_id
+    - kill_assay_date
+    - safety_assay_date
+  outcomes_y:
+    - y_tumor_viability_pct
+    - y_normal_viability_pct
+    - material_ros_level
+    - material_apoptosis_rate
+    - material_ic50_tumor
+    - material_ic50_normal
+  traceability_b:
+    - material_id
+    - material_parent_id
+    - tace_sample_id_raw
+    - source_sheet
+    - source_row
+    - mapping_type
+    - repeat_batch
+required_model_context: [workflow_branch, tumor_cell_line, normal_cell_line, concentration_ppm]
+

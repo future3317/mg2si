@@ -5,17 +5,18 @@
 - [ ] 只提交 Python、PowerShell、依赖和文档文件。
 - [ ] 原始 Excel、派生 CSV、模型输出和本地 `MultiBgolearn/` 不在暂存区。
 - [ ] 原始数据的授权范围允许本地处理；仓库不包含可逆推出实验数据的中间结果。
+- [ ] `docs/assets/` 中的汇报图只包含获准公开的聚合指标，不包含逐样品实验数据。
 - [ ] `workflow_branch`、`synthesis_required` 和两个目标列的定义没有被本次改动破坏。
 
 ## 本地复现
 
 ```powershell
 conda activate EGNN
-python -m pip install -r requirements-egnn.txt
+python -m pip install -e ".[test]"
 .\run_pipeline.ps1
 ```
 
-流水线最后的 `validate_bo_contract.py` 必须输出 `status: ok`。如果合成候选为零，应检查材料库中的 SHS、球磨和粒径覆盖率，不要用统计填补替代真实工艺。
+流水线的数据验证和测试必须通过。正式推荐还必须满足分支/细胞系最小样本量、grouped-CV 和阶段模型覆盖要求；不得用统计填补替代真实工艺或材料表征。
 
 ## 实验回写
 

@@ -2,7 +2,7 @@
 
 ## 1. 分层模型
 
-项目采用“原始源 -> 规范化层 -> BO 层 -> 实验反馈”的四层结构：
+项目采用“原始源 -> 规范化层 -> 工艺-状态-生物模型 -> 安全约束优化 -> 实验反馈”的结构：
 
 ```text
 材料库 Excel                 TACE Excel
@@ -11,14 +11,14 @@
                     |
           material/cell/stage 长表
                     |
-             BO 特征与双目标
+       process -> state -> biology
                     |
-       MultiBgolearn + EHVI 候选
+       BoTorch 概率安全约束候选
                     |
              实验执行与回写
 ```
 
-原始 Excel 只作为本地输入，不作为代码仓库资产。规范化层保留来源工作表、原始编号和映射状态，确保每个训练点都能回溯到源记录。
+原始 Excel 只作为本地输入，不作为代码仓库资产。默认派生资产收敛为 `data/processed/mg2si.sqlite`。规范化表、全部子表原始行、映射、质量问题、训练视图、评估和推荐均保存在该数据库中，避免多个 CSV 产生版本漂移。
 
 ## 2. 数据实体
 
@@ -60,24 +60,18 @@ BO 记录由材料身份、分支条件、可执行制备字段、实验条件�
 
 ## 5. 目标定义
 
-当前 demo 使用两个完整目标列，要求：
+当前系统使用两个完整响应列，要求：
 
 - 同一细胞系和实验条件下定义一致；
 - 数值、单位和方向明确；
 - 训练前只保留双目标同时存在的记录；
 - 在代码中明确最大化或最小化方向，并在输出中保留原始目标名称。
 
-Huh-7 只是当前 demo 的统一建模范围，不代表模型已经适用于所有细胞系。
+模型按 `workflow_branch × tumor_cell_line × normal_cell_line` 隔离；任何范围样本不足都返回证据不足。
 
 ## 6. 可追溯输出
 
-本地输出分为三类：
-
-- 规范化数据：`bo_material_master.csv`、`bo_cell_long.csv`、`bo_stage_long.csv` 等；
-- BO 输入：`bo_features.csv`、`bo_targets.csv`、`bo_joint_dataset.csv`；
-- 推荐结果：`mobo_demo_virtual_candidates.csv`、`mobo_demo_recommendation.csv`。
-
-这些文件都属于派生数据，默认不提交。代码和文档必须能够在获得授权的原始 Excel 后重新生成它们。
+本地默认只输出 SQLite 数据库。`bo_training` 是数据库视图，不再物化为特征、目标和 joint 三套 CSV。阶段子表进入 `bioassay_source_audit`，与汇总不一致的记录进入 `source_conflict`。需要交换数据时再显式导出目标表。
 
 ## 7. 实验闭环
 

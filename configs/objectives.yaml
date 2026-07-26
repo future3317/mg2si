@@ -1,0 +1,19 @@
+schema_version: "1.0"
+efficacy:
+  field: y_tumor_viability_pct
+  direction: minimize
+  threshold_pct: 50.0
+safety:
+  field: y_normal_viability_pct
+  direction: maximize
+  threshold_pct: 80.0
+  minimum_probability: 0.80
+stability:
+  enabled: false
+  field: material_pdi
+  direction: minimize
+  threshold: null
+decision_metric:
+  primary: constrained_expected_improvement
+  descriptive: normal_minus_tumor_viability
+

@@ -1,0 +1,15 @@
+botorch<1,>=0.12
+gpytorch<2,>=1.11
+matplotlib<4,>=3.8
+numpy<3,>=1.24
+openpyxl<4,>=3.1
+pandas<3,>=2.0
+PyYAML<7,>=6
+scikit-learn<2,>=1.4
+torch>=2.2
+
+[legacy]
+MultiBgolearn==0.1.1
+
+[test]
+pytest<9,>=8
