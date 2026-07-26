@@ -60,6 +60,8 @@ python -m pip install -e ".[test]"
 
 ![当前数据就绪度](docs/assets/02_data_readiness.png)
 
+![高斯过程剂量响应](docs/assets/05_gp_dose_response.png)
+
 更多汇报图和讲解口径见 `docs/PITCH_BRIEF.md`。图表由以下命令从本地 SQLite 聚合生成，不包含原始实验明细：
 
 ```powershell

@@ -8,6 +8,11 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch
 import numpy as np
 import pandas as pd
+from scipy.stats import spearmanr
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, RBF, WhiteKernel
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+from sklearn.model_selection import GroupKFold
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -205,6 +210,116 @@ def roadmap() -> None:
     save(fig, "04_capability_roadmap.png")
 
 
+def gp_model(seed: int = 20260726) -> GaussianProcessRegressor:
+    kernel = (
+        ConstantKernel(1.0, (1e-2, 1e3))
+        * RBF(length_scale=0.35, length_scale_bounds=(0.03, 3.0))
+        + WhiteKernel(noise_level=1.0, noise_level_bounds=(1e-3, 1e3))
+    )
+    return GaussianProcessRegressor(
+        kernel=kernel,
+        normalize_y=True,
+        n_restarts_optimizer=4,
+        random_state=seed,
+    )
+
+
+def gp_scope(connection: sqlite3.Connection) -> pd.DataFrame:
+    return pd.read_sql_query(
+        """
+        SELECT concentration_ppm, y_tumor_viability_pct, y_normal_viability_pct,
+               material_parent_id, experiment_id, normal_measurement_group_id
+        FROM bo_training
+        WHERE workflow_branch = 'synthetic'
+          AND tumor_cell_line = 'Huh-7'
+          AND normal_cell_line = 'THLE'
+          AND model_eligible_direct = 1
+        """,
+        connection,
+    )
+
+
+def gp_dose_response(connection: sqlite3.Connection) -> None:
+    frame = gp_scope(connection)
+    concentration = pd.to_numeric(frame["concentration_ppm"], errors="coerce").to_numpy(dtype=float)
+    x = np.log10(concentration).reshape(-1, 1)
+    grid_concentration = np.geomspace(concentration.min(), concentration.max(), 240)
+    grid = np.log10(grid_concentration).reshape(-1, 1)
+    targets = [
+        ("y_tumor_viability_pct", "肿瘤细胞存活率", BLUE),
+        ("y_normal_viability_pct", "正常细胞存活率", GOLD),
+    ]
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6.8), sharey=True)
+    rng = np.random.default_rng(20260726)
+    for ax, (field, label, color) in zip(axes, targets):
+        y = pd.to_numeric(frame[field], errors="coerce").to_numpy(dtype=float)
+        model = gp_model().fit(x, y)
+        mean, std = model.predict(grid, return_std=True)
+        jitter = np.exp(rng.normal(0, 0.018, size=len(concentration)))
+        ax.scatter(concentration * jitter, y, s=30, alpha=0.38, facecolor=PANEL, edgecolor=color, linewidth=1.2, label="真实观测")
+        ax.plot(grid_concentration, mean, color=color, linewidth=2.8, label="GP 后验均值")
+        ax.fill_between(grid_concentration, mean - 1.96 * std, mean + 1.96 * std, color=color, alpha=0.18, label="95% 预测区间")
+        dose_summary = frame.assign(_y=y).groupby("concentration_ppm")["_y"].agg(["mean", "count"]).reset_index()
+        ax.scatter(dose_summary["concentration_ppm"], dose_summary["mean"], s=75, color=color, edgecolor=INK, linewidth=0.8, zorder=4, label="剂量均值")
+        ax.set_xscale("log")
+        ax.set_xticks([125, 250, 500], ["125", "250", "500"])
+        ax.set_xlabel("浓度（ppm，对数坐标）")
+        ax.set_title(label, loc="left", fontsize=16, fontweight="bold", color=color)
+        ax.grid(color=GRID, linewidth=0.8)
+        ax.set_axisbelow(True)
+        ax.spines[["top", "right"]].set_visible(False)
+    axes[0].set_ylabel("细胞存活率（% of control）")
+    axes[0].legend(frameon=False, loc="upper right", fontsize=9)
+    fig.suptitle("高斯过程剂量—响应拟合", x=0.07, ha="left", fontsize=22, fontweight="bold")
+    fig.text(0.07, 0.91, "Synthetic × Huh-7 × THLE｜n=42｜仅有 3 个剂量水平，曲线用于展示后验趋势与不确定性", color=MUTED, fontsize=11)
+    fig.text(0.99, 0.01, "不得将剂量点之间的平滑插值解释为已验证的连续剂量机制", ha="right", color=ORANGE, fontsize=9.5, fontweight="bold")
+    fig.subplots_adjust(top=0.82, bottom=0.13, wspace=0.12)
+    save(fig, "05_gp_dose_response.png")
+
+
+def gp_cross_validation(connection: sqlite3.Connection) -> None:
+    frame = gp_scope(connection)
+    x = np.log10(pd.to_numeric(frame["concentration_ppm"], errors="coerce").to_numpy(dtype=float)).reshape(-1, 1)
+    specifications = [
+        ("y_tumor_viability_pct", "肿瘤细胞存活率", "material_parent_id", BLUE),
+        ("y_normal_viability_pct", "正常细胞存活率", "normal_measurement_group_id", GOLD),
+    ]
+    fig, axes = plt.subplots(1, 2, figsize=(13.5, 6.8))
+    metric_rows = []
+    for ax, (field, label, group_field, color) in zip(axes, specifications):
+        y = pd.to_numeric(frame[field], errors="coerce").to_numpy(dtype=float)
+        fallback = frame["experiment_id"].astype(str)
+        groups = frame[group_field].where(frame[group_field].notna(), fallback).astype(str).to_numpy()
+        splitter = GroupKFold(n_splits=min(5, len(np.unique(groups))))
+        predicted = np.full(len(frame), np.nan)
+        for train, test in splitter.split(x, y, groups):
+            predicted[test] = gp_model(seed=20260726 + len(test)).fit(x[train], y[train]).predict(x[test])
+        mae = float(mean_absolute_error(y, predicted))
+        rmse = float(mean_squared_error(y, predicted) ** 0.5)
+        rho = float(spearmanr(y, predicted).statistic)
+        metric_rows.append({"target": field, "group_field": group_field, "mae": mae, "rmse": rmse, "spearman": rho, "rows": len(frame)})
+        lower = min(y.min(), predicted.min()) - 5
+        upper = max(y.max(), predicted.max()) + 5
+        ax.scatter(y, predicted, s=46, alpha=0.62, color=color, edgecolor=PANEL, linewidth=0.7)
+        ax.plot([lower, upper], [lower, upper], color=INK, linestyle="--", linewidth=1.5, label="理想预测")
+        ax.set_xlim(lower, upper)
+        ax.set_ylim(lower, upper)
+        ax.set_aspect("equal", adjustable="box")
+        ax.set_xlabel("实测存活率（%）")
+        ax.set_ylabel("交叉验证预测（%）")
+        ax.set_title(label, loc="left", fontsize=16, fontweight="bold", color=color)
+        ax.text(0.04, 0.95, f"MAE {mae:.1f}｜RMSE {rmse:.1f}\nSpearman {rho:.2f}", transform=ax.transAxes, va="top", fontsize=10.5, fontweight="bold")
+        ax.grid(color=GRID, linewidth=0.8)
+        ax.set_axisbelow(True)
+        ax.spines[["top", "right"]].set_visible(False)
+    pd.DataFrame(metric_rows).to_sql("gp_visualization_metrics", connection, if_exists="replace", index=False)
+    fig.suptitle("高斯过程分组交叉验证", x=0.07, ha="left", fontsize=22, fontweight="bold")
+    fig.text(0.07, 0.91, "仅使用浓度作为输入｜肿瘤按材料父级分组｜正常细胞按共享安全测量组分组", color=MUTED, fontsize=11)
+    fig.text(0.99, 0.01, "这是剂量基线，不是完整的工艺—表征—生物模型", ha="right", color=ORANGE, fontsize=9.5, fontweight="bold")
+    fig.subplots_adjust(top=0.82, bottom=0.13, wspace=0.24)
+    save(fig, "06_gp_cross_validation.png")
+
+
 def main() -> None:
     if not DATABASE.exists():
         raise FileNotFoundError(f"Run `mg2si ingest` first: {DATABASE}")
@@ -213,6 +328,8 @@ def main() -> None:
     with sqlite3.connect(DATABASE) as connection:
         data_readiness(connection)
         baseline_validation(connection)
+        gp_dose_response(connection)
+        gp_cross_validation(connection)
     roadmap()
     print({"status": "ok", "figures": sorted(path.name for path in OUTPUT.glob("*.png"))})
 
