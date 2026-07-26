@@ -1,0 +1,21 @@
+# Raw and derived research data: do not commit.
+*.xlsx
+*.xls
+*.csv
+bo_*
+mobo_*.csv
+sample_id_mapping_review.csv
+
+# Local third-party checkout and Python caches.
+MultiBgolearn/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+
+# Local editor and runtime files.
+.vscode/
+.idea/
+*.log

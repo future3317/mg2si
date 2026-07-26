@@ -1,0 +1,4 @@
+MultiBgolearn==0.1.1
+pandas>=2.0
+numpy>=1.24
+openpyxl>=3.1
