@@ -12,6 +12,7 @@ sample_id_mapping_review.csv
 # Local third-party checkout and Python caches.
 MultiBgolearn/
 __pycache__/
+*.egg-info/
 *.py[cod]
 .venv/
 venv/
