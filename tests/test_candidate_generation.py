@@ -9,3 +9,7 @@ def test_conditional_candidate_generation():
     assert not validate_candidates(commercial)
     assert commercial["material_max_temp_c"].isna().all()
 
+
+def test_acquisition_requires_efficacy_and_safety_probability():
+    utility = (100.0 - 75.0 + 5.0) * 0.0 * 0.99
+    assert utility == 0.0

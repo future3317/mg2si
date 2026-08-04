@@ -68,7 +68,7 @@ def validate_database(path: Path) -> dict:
             connection,
         )
         counts = {}
-        for table in ("material", "bioassay", "bioassay_source_audit", "source_record", "source_conflict"):
+        for table in ("material", "bioassay", "bioassay_source_audit", "source_record", "source_conflict", "supplement_process_observation", "supplement_material_lineage", "supplement_index_reference", "material_input_coverage", "bioassay_condition_summary", "data_quality_profile", "prospective_design_space", "prospective_design_space_summary"):
             counts[table] = int(connection.execute(f'SELECT COUNT(*) FROM "{table}"').fetchone()[0])
         eligible = connection.execute(
             "SELECT SUM(model_eligible_direct), SUM(model_eligible_material) FROM bioassay"

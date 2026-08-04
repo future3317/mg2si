@@ -1,2 +1,1 @@
-"""Input, parsing, and source-manifest utilities."""
-
+"""Source readers, parsers, and provenance helpers."""

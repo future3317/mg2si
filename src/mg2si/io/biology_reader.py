@@ -1,14 +1,9 @@
-from pathlib import Path
+﻿from pathlib import Path
 import re
 
 import numpy as np
 import pandas as pd
-from mg2si.io.excel_reader import resolve_sources
 from mg2si.io.parsers import parse_pvp_mw as parse_pvp_mw_strict
-
-
-ROOT = Path(__file__).resolve().parent
-_, TACE_PATH = resolve_sources(ROOT)
 
 
 def clean(value):
@@ -165,37 +160,3 @@ def melt(data):
     return pd.DataFrame(rows)
 
 
-def main():
-    xl = pd.ExcelFile(TACE_PATH)
-    tables = []
-    for index, sheet in enumerate(xl.sheet_names):
-        if sheet == "备注":
-            continue
-        tables.append(read_sheet(TACE_PATH, sheet, index == 0))
-    row_tables = pd.concat(tables, ignore_index=True)
-    long = melt(row_tables)
-    long["duplicate_group_key"] = (
-        long["tace_sample_id"].fillna("").astype(str) + "|" + long["exp_index"].fillna("").astype(str)
-        + "|" + long["repeat_batch"].astype(str) + "|" + long["concentration_ppm"].astype(str)
-    )
-    long["duplicate_group_count"] = long["duplicate_group_key"].map(long["duplicate_group_key"].value_counts())
-    summary = long[long["is_summary_source"] == 1].copy()
-    subtables = long[long["is_summary_source"] == 0].copy()
-    registry = row_tables.groupby(["source_sheet", "is_summary_source"], dropna=False).size().reset_index(name="row_count")
-    registry["long_cell_point_count"] = registry["row_count"] * 3
-    registry["duplicate_group_count"] = registry["source_sheet"].map(long.groupby("source_sheet")["duplicate_group_count"].apply(lambda x: int((x > 1).sum())).to_dict())
-    long.to_csv(ROOT / "bo_cell_all_sources_long.csv", index=False, encoding="utf-8-sig")
-    summary.to_csv(ROOT / "bo_cell_summary_long.csv", index=False, encoding="utf-8-sig")
-    subtables.to_csv(ROOT / "bo_cell_subtables_long.csv", index=False, encoding="utf-8-sig")
-    registry.to_csv(ROOT / "bo_cell_source_registry.csv", index=False, encoding="utf-8-sig")
-    print({
-        "source_sheets": registry[["source_sheet", "row_count"]].to_dict("records"),
-        "all_source_long_rows": int(len(long)),
-        "summary_long_rows": int(len(summary)),
-        "subtable_long_rows": int(len(subtables)),
-        "duplicate_long_rows_marked": int((long["duplicate_group_count"] > 1).sum()),
-    })
-
-
-if __name__ == "__main__":
-    main()

@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 $env:PYTHONUTF8 = "1"
 $env:PYTHONIOENCODING = "utf-8"
+Set-Location -LiteralPath $PSScriptRoot
 
 conda run --no-capture-output -n EGNN python -m pip install -e ".[test]"
 if ($LASTEXITCODE -ne 0) { throw "Environment installation failed." }

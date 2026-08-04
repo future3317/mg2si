@@ -5,10 +5,10 @@ import sqlite3
 
 import pandas as pd
 
-from mg2si.config import PROJECT_ROOT
+from mg2si.config import PROJECT_ROOT, PROCESSED_ROOT
 
 
-DEFAULT_DATABASE = PROJECT_ROOT / "data" / "processed" / "mg2si.sqlite"
+DEFAULT_DATABASE = PROCESSED_ROOT / "mg2si.sqlite"
 
 
 def connect(path: Path = DEFAULT_DATABASE) -> sqlite3.Connection:
@@ -47,4 +47,3 @@ def remove_legacy_csvs(root: Path = PROJECT_ROOT) -> list[str]:
         path.unlink()
         removed.append(path.name)
     return removed
-

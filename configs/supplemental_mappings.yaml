@@ -1,0 +1,112 @@
+schema_version: "1.0"
+material_records:
+  - material_id: "MS-20251201-商业化"
+    product_stage: "raw_material"
+    material_source: "commercial"
+    synthesis_method: "commercial_purchase"
+    source_mapping_status: "confirmed"
+    note: "Commercial raw material confirmed by data provider as the parent material for MS-Q-251124-A/B/C/D."
+solvent_treatments:
+  - material_id: "MS-Q-260122-水"
+    source_material_id_raw: "MS-Q-260122"
+    post_treatment: "95% ethanol + water ultrasonication"
+    ultrasonic_time_raw: "1 h"
+    ultrasonic_time_h: 1.0
+  - material_id: "MS-Q-260122-氨水"
+    source_material_id_raw: "MS-Q-260122"
+    post_treatment: "95% ethanol + ammonia-water ultrasonication"
+    ultrasonic_time_raw: "1 h"
+    ultrasonic_time_h: 1.0
+  - material_id: "MS-Q-260122-乙醇"
+    source_material_id_raw: "MS-Q-260122"
+    post_treatment: "absolute ethanol ultrasonication"
+    ultrasonic_time_raw: "1 h"
+    ultrasonic_time_h: 1.0
+particle_fractions:
+  - material_id: "MS-Q-260113-A"
+    material_parent_id: "MS-260110-SHS"
+    source_material_id_raw: "MS-Q-260110"
+    fraction_label: "A"
+    size_lower_nm: null
+    size_upper_nm: 200.0
+    note: "Separately fractionated from MS-Q-260110; particle size <200 nm."
+  - material_id: "MS-Q-260113-B"
+    material_parent_id: "MS-260110-SHS"
+    source_material_id_raw: "MS-Q-260110"
+    fraction_label: "B"
+    size_lower_nm: 200.0
+    size_upper_nm: 500.0
+    note: "Separately fractionated from MS-Q-260110; particle size 200-500 nm."
+  - material_id: "MS-Q-260113-C"
+    material_parent_id: "MS-260110-SHS"
+    source_material_id_raw: "MS-Q-260110"
+    fraction_label: "C"
+    size_lower_nm: 500.0
+    size_upper_nm: 800.0
+    note: "Separately fractionated from MS-Q-260110; particle size 500-800 nm."
+  - material_id: "MS-Q-251124-A"
+    material_parent_id: "MS-20251201-商业化"
+    source_material_id_raw: "MS-20251201-商业化"
+    fraction_label: "A"
+    size_lower_nm: null
+    size_upper_nm: 200.0
+    size_basis: "data_provider_confirmation_2026-07-26"
+    index_ids: ["S21"]
+    assay_status: "particle_size_detection_and_cell_experiment_completed"
+    note: "Ultrasonicated commercial raw material; retained size fraction <200 nm."
+  - material_id: "MS-Q-251124-B"
+    material_parent_id: "MS-20251201-商业化"
+    source_material_id_raw: "MS-20251201-商业化"
+    fraction_label: "B"
+    size_lower_nm: 500.0
+    size_upper_nm: 800.0
+    size_basis: "data_provider_confirmation_2026-07-26"
+    index_ids: ["S22"]
+    assay_status: "particle_size_detection_and_cell_experiment_completed"
+    note: "Ultrasonicated commercial raw material; retained size fraction 500-800 nm."
+  - material_id: "MS-Q-251124-C"
+    material_parent_id: "MS-20251201-商业化"
+    source_material_id_raw: "MS-20251201-商业化"
+    fraction_label: "C"
+    size_lower_nm: 500.0
+    size_upper_nm: 800.0
+    size_basis: "data_provider_confirmation_2026-07-26"
+    index_ids: ["S23"]
+    assay_status: "particle_size_detection_and_cell_experiment_completed"
+    note: "Ultrasonicated commercial raw material; retained size fraction 500-800 nm."
+  - material_id: "MS-Q-251124-D"
+    material_parent_id: "MS-20251201-商业化"
+    source_material_id_raw: "MS-20251201-商业化"
+    fraction_label: "D"
+    size_lower_nm: 800.0
+    size_upper_nm: null
+    size_basis: "data_provider_confirmation_2026-07-26"
+    index_ids: ["S24"]
+    assay_status: "particle_size_detection_and_cell_experiment_completed"
+    note: "Ultrasonicated commercial raw material; retained size fraction >800 nm."
+index_references:
+  - index_id: "S20"
+    material_id: "MS-20251201-商业化"
+    sample_stage: "raw_material"
+    mapping_status: "confirmed"
+    assay_scope: "particle_size_detection_and_cell_experiment_completed"
+  - index_id: "S21"
+    material_id: "MS-Q-251124-A"
+    sample_stage: "intermediate"
+    mapping_status: "confirmed"
+    assay_scope: "particle_size_detection_and_cell_experiment_completed"
+  - index_id: "S22"
+    material_id: "MS-Q-251124-B"
+    sample_stage: "intermediate"
+    mapping_status: "confirmed"
+    assay_scope: "particle_size_detection_and_cell_experiment_completed"
+  - index_id: "S23"
+    material_id: "MS-Q-251124-C"
+    sample_stage: "intermediate"
+    mapping_status: "confirmed"
+    assay_scope: "particle_size_detection_and_cell_experiment_completed"
+  - index_id: "S24"
+    material_id: "MS-Q-251124-D"
+    sample_stage: "intermediate"
+    mapping_status: "confirmed"
+    assay_scope: "particle_size_detection_and_cell_experiment_completed"

@@ -5,6 +5,9 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_ROOT = PROJECT_ROOT / "configs"
+DATA_ROOT = PROJECT_ROOT / "data"
+PROCESSED_ROOT = DATA_ROOT / "processed"
+REPORT_ROOT = PROJECT_ROOT / "docs" / "assets"
 
 
 def load_config(name: str, root: Path | None = None) -> dict[str, Any]:
@@ -16,4 +19,3 @@ def load_config(name: str, root: Path | None = None) -> dict[str, Any]:
     if not isinstance(data, dict):
         raise ValueError(f"Configuration must be a mapping: {path}")
     return data
-

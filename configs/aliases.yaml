@@ -15,4 +15,8 @@ aliases:
     approved_by: pending_researcher_review
     approved_date: null
     reason: legacy_mapping_rule
-
+  20251201-MS-商业化:
+    candidates: ["MS-20251201-商业化"]
+    approved_by: data_provider_confirmation
+    approved_date: "2026-07-26"
+    reason: confirmed_parent_material_alias

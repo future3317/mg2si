@@ -1,15 +1,12 @@
-from pathlib import Path
+﻿from pathlib import Path
 import re
 
 import numpy as np
 import pandas as pd
-from mg2si.io.excel_reader import resolve_sources
 from mg2si.io.parsers import parse_pvp_mw as parse_pvp_mw_strict
 from mg2si.mapping.resolver import load_aliases
 
 
-ROOT = Path(__file__).resolve().parent
-MG_PATH, TACE_PATH = resolve_sources(ROOT)
 ALIASES = load_aliases()
 
 
@@ -208,6 +205,10 @@ def choose_material_id(tace_id, stage, material_ids):
     if pd.isna(tace_id):
         return np.nan, "unmatched", "missing_sample_id", ""
     raw = str(tace_id)
+    raw_exact = [mid for mid in material_ids if clean_text(mid) == clean_text(raw)]
+    if len(raw_exact) == 1:
+        selected = raw_exact[0]
+        return selected, "exact", "raw_exact_id", selected
     normalized = normalize_material_id(raw)
     ids = sorted(material_ids)
     exact = [mid for mid in ids if normalized == normalize_material_id(mid)]
@@ -248,6 +249,9 @@ def infer_parent_id(material_id, material_ids):
     if pd.isna(material_id):
         return np.nan
     material_id = str(material_id)
+    layer_match = re.match(r"^(MS-\d{6}-SHS)\s+(top|down|mid)$", material_id, flags=re.IGNORECASE)
+    if layer_match and layer_match.group(1) in material_ids:
+        return layer_match.group(1)
     if "-SHS" in material_id:
         return material_id
     stem = material_id.split("-Q")[0] if "-Q" in material_id else material_id
@@ -324,79 +328,3 @@ def make_long_cell_table(data):
     return result
 
 
-def main():
-    material = read_material_master(MG_PATH)
-    tace = read_tace_summary(TACE_PATH)
-    cells = make_long_cell_table(tace)
-    material_ids = set(material["material_id"].dropna())
-
-    resolved = cells.apply(lambda row: choose_material_id(row["tace_sample_id"], row["sample_stage"], material_ids), axis=1)
-    cells["material_id"] = resolved.map(lambda x: x[0])
-    cells["mapping_type"] = resolved.map(lambda x: x[1])
-    cells["mapping_basis"] = resolved.map(lambda x: x[2])
-    cells["mapping_candidates"] = resolved.map(lambda x: x[3])
-    cells["material_parent_id"] = cells["material_id"].map(lambda x: infer_parent_id(x, material_ids))
-
-    material_prefixed = material.add_prefix("material_")
-    joint = cells.merge(material_prefixed, how="left", left_on="material_id", right_on="material_material_id")
-    feature_columns = [
-        "experiment_id", "cell_record_id", "tace_sample_id_raw", "tace_sample_id", "material_id", "material_parent_id",
-        "mapping_type", "mapping_basis", "sample_stage", "material_source", "is_milled", "milled_size_nm_raw",
-        "milled_size_nm", "post_treatment", "pvp_mw_raw", "pvp_mw", "pvp_ratio_raw", "material_to_pvp_ratio",
-        "repeat_batch", "concentration_ppm", "tumor_cell_line",
-        "workflow_branch", "synthesis_required", "synthesis_feature_status",
-        "material_sample_date", "material_material_source", "material_synthesis_method", "material_is_layered",
-        "material_mg_mass_mg", "material_si_mass_mg", "material_molar_ratio_Mg_to_Si", "material_vacuum_cycle",
-        "material_vacuum_time_min", "material_initial_pressure_atm", "material_max_temp_c", "material_hold_time_min",
-        "material_protective_gas", "material_milling_mode", "material_ball_to_material_ratio",
-        "material_milling_cycle_time", "material_pvp_mw", "material_pvp_material_to_pvp_ratio",
-        "material_post_treatment", "material_ultrasonic_time_h", "material_grain_size_nm", "material_dls_size_nm",
-        "material_pdi", "material_zeta_potential_mv",
-    ]
-    features = joint[feature_columns].copy()
-    target_columns = [
-        "experiment_id", "cell_record_id", "tace_sample_id", "material_id", "material_parent_id",
-        "mapping_type", "workflow_branch", "synthesis_required", "synthesis_feature_status", "concentration_ppm",
-        "y_tumor_viability_pct", "y_normal_viability_pct",
-        "y_selectivity_index", "y_selectivity_index_source", "target_complete", "target_quality_flag",
-    ]
-    targets = joint[target_columns].copy()
-    targets["objective_tumor_viability"] = "minimize"
-    targets["objective_normal_viability"] = "maximize"
-
-    mapping = cells[["tace_sample_id_raw", "tace_sample_id", "material_id", "material_parent_id", "mapping_type", "mapping_basis", "mapping_candidates", "sample_stage"]].drop_duplicates()
-    mapping["cell_row_count"] = mapping["tace_sample_id"].map(cells["tace_sample_id"].value_counts())
-    coverage_columns = [
-        "material_mg_mass_mg", "material_si_mass_mg", "material_molar_ratio_Mg_to_Si", "material_vacuum_cycle",
-        "material_vacuum_time_min", "material_initial_pressure_atm", "material_max_temp_c", "material_hold_time_min",
-        "material_ball_to_material_ratio", "material_milling_cycle_time", "material_grain_size_nm", "material_dls_size_nm",
-    ]
-    coverage = pd.DataFrame({
-        "feature": coverage_columns,
-        "non_null_rows": [int(joint[c].notna().sum()) for c in coverage_columns],
-        "total_cell_rows": [int(len(joint)) for _ in coverage_columns],
-        "coverage_rate": [float(joint[c].notna().mean()) for c in coverage_columns],
-    })
-
-    material.to_csv(ROOT / "bo_material_master.csv", index=False, encoding="utf-8-sig")
-    material.to_csv(ROOT / "bo_meta_sample.csv", index=False, encoding="utf-8-sig")
-    cells.to_csv(ROOT / "bo_cell_long.csv", index=False, encoding="utf-8-sig")
-    cells.to_csv(ROOT / "bo_experiment_long.csv", index=False, encoding="utf-8-sig")
-    features.to_csv(ROOT / "bo_features.csv", index=False, encoding="utf-8-sig")
-    targets.to_csv(ROOT / "bo_targets.csv", index=False, encoding="utf-8-sig")
-    joint.to_csv(ROOT / "bo_joint_dataset.csv", index=False, encoding="utf-8-sig")
-    mapping.to_csv(ROOT / "sample_id_mapping_review.csv", index=False, encoding="utf-8-sig")
-    coverage.to_csv(ROOT / "bo_feature_coverage.csv", index=False, encoding="utf-8-sig")
-    print({
-        "material_master_rows": int(len(material)),
-        "tace_summary_rows": int(len(tace)),
-        "cell_long_rows": int(len(cells)),
-        "complete_two_target_rows": int(targets["target_complete"].sum()),
-        "mapping_type_counts": mapping["mapping_type"].value_counts(dropna=False).to_dict(),
-        "mapped_cell_rows": int(cells["material_id"].notna().sum()),
-        "coverage": {c: round(float(joint[c].notna().mean()), 3) for c in coverage_columns},
-    })
-
-
-if __name__ == "__main__":
-    main()

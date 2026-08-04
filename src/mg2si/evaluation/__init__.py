@@ -1,2 +1,1 @@
-"""Leakage-resistant model evaluation."""
-
+"""Grouped validation, metrics, and evaluation services."""
